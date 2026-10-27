@@ -153,17 +153,14 @@
       <button data-st="hist">Historia w GKS Futsal Tychy</button>
     </div>
     <div id="stat">
-      <div class="bar">
-        <span>Przyciski <b>+</b> / <b>−</b> zmieniają liczbę bramek i meczów. Zmiany zapisują się w tej przeglądarce.</span>
-        <button class="reset" id="reset">Przywróć dane z futsal-polska.pl</button>
-      </div>
+      <div class="bar"><span>Dane z futsal-polska.pl. Ikona piłki pokazuje, w których meczach zawodnik strzelił bramki.</span></div>
       <div class="card"><table>
         <thead><tr><th>Zawodnik</th><th class="c">Mecze w GKS</th><th class="c">Bramki</th><th class="c hide-s">Śr. / mecz</th></tr></thead>
         <tbody id="tbZawodnicy"></tbody>
       </table></div>
     </div>
     <div id="hist" hidden>
-      <div class="bar"><span>Wszystkie sezony w GKS Futsal Tychy (dane z futsal-polska.pl, od <b>▸</b> rozwiniesz podział na sezony). Bieżący sezon liczy się razem z Twoimi zmianami + / −.</span></div>
+      <div class="bar"><span>Wszystkie sezony w GKS Futsal Tychy (dane z futsal-polska.pl, od <b>▸</b> rozwiniesz podział na sezony).</span></div>
       <div class="card"><table>
         <thead><tr><th>Zawodnik</th><th class="c">Sezony</th><th class="c">Mecze</th><th class="c">Bramki</th></tr></thead>
         <tbody id="tbHist"></tbody>
@@ -258,15 +255,7 @@ const PLAYERS_BASE = [
   ["Michał Słonina", 0, 6, 0],
 ].map(([n,gk,m,g])=>({n,gk:!!gk,m,g}));
 
-// ---------- STAN (zmiany użytkownika w localStorage) ----------
-const KEY="gks-futsal-tychy-v2";
-let players;
-function load(){
-  try{const s=JSON.parse(localStorage.getItem(KEY));if(Array.isArray(s)&&s.length===PLAYERS_BASE.length){players=s;return}}catch(e){}
-  players=PLAYERS_BASE.map(p=>({...p}));
-}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(players))}catch(e){}}
-load();
+const players=PLAYERS_BASE.map(p=>({...p}));
 
 const fmtDate=d=>new Date(d+"T12:00:00").toLocaleDateString("pl-PL",{weekday:"short",day:"2-digit",month:"2-digit",year:"numeric"});
 const $=id=>document.getElementById(id);
@@ -407,7 +396,7 @@ function goalsRow(p){
     const d=new Date(m.d+"T12:00:00").toLocaleDateString("pl-PL");
     const mt=m.h?`<b>GKS</b> ${m.g}:${m.o} ${m.opp}`:`${m.opp} ${m.o}:${m.g} <b>GKS</b>`;
     return `<tr><td class="rd">${d}</td><td>${m.r}. kol. · ${mt}</td><td class="c score">${min.map(x=>x+"'").join(", ")}</td><td class="c">${min.length}</td></tr>`}).join("");
-  const note=tot!==p.g?`<div class="note">Z protokołów: ${tot} bramek. W tabeli wyżej jest ${p.g} (zmieniłeś licznik przyciskami + / −).</div>`:"";
+  const note=tot!==p.g?`<div class="note">Z protokołów: ${tot} bramek.</div>`:"";
   return `<tr class="grow"><td colspan="4"><div class="hbox">${g.length?`<table><thead><tr><th>Data</th><th>Mecz</th><th class="c">Minuty</th><th class="c">Gole</th></tr></thead><tbody>${body}</tbody></table>`:'<div class="note">Brak bramek w protokołach tego sezonu.</div>'}${note}</div></td></tr>`;
 }
 document.addEventListener("click",e=>{const b=e.target.closest("button.gbtn");if(!b)return;const n=b.dataset.pn;openG.has(n)?openG.delete(n):openG.add(n);renderPlayers()});
@@ -415,14 +404,9 @@ function renderPlayers(){
   const rows=players.map((p,i)=>({...p,i})).sort((a,b)=>b.g-a.g||b.m-a.m||a.n.localeCompare(b.n,"pl"));
   $("tbZawodnicy").innerHTML=rows.map(p=>`<tr>
     <td><b>${p.n}</b>${p.gk?'<span class="gk">BR</span>':""}${goalBtn(p.n)}</td>
-    <td class="c">${ctrl(p.i,"m",p.m)}</td>
-    <td class="c">${ctrl(p.i,"g",p.g)}</td>
+    <td class="c score">${p.m}</td>
+    <td class="c score">${p.g}</td>
     <td class="c hide-s rd">${p.m?(p.g/p.m).toFixed(2):"–"}</td></tr>${openG.has(p.n)?goalsRow(p):""}`).join("");
-}
-function ctrl(i,f,v){
-  const lbl=f==="g"?"bramek":"meczów";
-  return `<span class="ctrl"><button class="pm minus" data-i="${i}" data-f="${f}" data-d="-1" aria-label="Odejmij, ${lbl}" ${v<=0?"disabled":""}>−</button>
-    <output>${v}</output><button class="pm" data-i="${i}" data-f="${f}" data-d="1" aria-label="Dodaj, ${lbl}">+</button></span>`;
 }
 
 const openP=new Set();
@@ -452,13 +436,6 @@ document.addEventListener("click",e=>{const b=e.target.closest("button.badge.btn
 document.addEventListener("click",e=>{const b=e.target.closest("button.ibtn:not(.gbtn)");if(!b)return;
   const m=MATCHES.find(x=>x.opp===b.dataset.opp&&x.d===b.dataset.d);const slot=b.closest("td").querySelector(".hslot");
   const open=b.getAttribute("aria-expanded")==="true";b.setAttribute("aria-expanded",!open);slot.innerHTML=open?"":oppPanel(m)});
-$("tbZawodnicy").addEventListener("click",e=>{
-  const b=e.target.closest("button.pm");if(!b)return;
-  const p=players[+b.dataset.i],f=b.dataset.f;
-  p[f]=Math.max(0,p[f]+ +b.dataset.d);
-  save();renderPlayers();renderHist();
-});
-$("reset").onclick=()=>{if(confirm("Przywrócić dane z futsal-polska.pl i usunąć własne zmiany?")){players=PLAYERS_BASE.map(p=>({...p}));save();renderPlayers();renderHist()}};
 
 document.querySelector("nav").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b)return;
