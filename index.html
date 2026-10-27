@@ -148,7 +148,7 @@
     </table></div>
     </div>
     <div id="tmRiv" hidden>
-      <div class="bar"><span>Najbliższe mecze każdej drużyny ligi (1. PLF, grupa południowa). Kliknij nazwę drużyny, żeby rozwinąć listę. D = u siebie, W = wyjazd.</span></div>
+      <div class="bar"><span>Wszystkie pozostałe mecze każdej drużyny ligi (1. PLF, grupa południowa). Kliknij nazwę drużyny, żeby rozwinąć listę. D = u siebie, W = wyjazd.</span></div>
       <div id="rivList"></div>
     </div>
   </section>
@@ -366,7 +366,7 @@ function renderRywale(){
   const today=new Date().toISOString().slice(0,10);
   const order=[2,...TEAMS.map((_,i)=>i).filter(i=>i!==2)];
   $("rivList").innerHTML=order.map(i=>{
-    const ms=FIX.filter(m=>(m.h===i||m.a===i)&&(m.d>=today||m.st)).sort((a,b)=>a.d.localeCompare(b.d)||(a.t||"99").localeCompare(b.t||"99")).slice(0,5);
+    const ms=FIX.filter(m=>(m.h===i||m.a===i)&&(m.d>=today||m.st)).sort((a,b)=>a.d.localeCompare(b.d)||(a.t||"99").localeCompare(b.t||"99"));
     const row=m=>{const home=m.h===i,opp=TEAMS[home?m.a:m.h];
       return `<tr><td class="rd">${fmtDate(m.d)}</td><td class="rd">${m.t||"—"}</td><td><span class="ha${home?"":" a"}">${home?"D":"W"}</span>${opp}${m.st?` <span class="tag">${m.st}</span>`:""}</td><td class="c rd">${m.k}. kol.</td></tr>`};
     const nx=ms[0]?`najbliższy: ${fmtDate(ms[0].d).replace(/^\S+, /,"")} z ${TEAMS[ms[0].h===i?ms[0].a:ms[0].h]}${ms[0].st?" ("+ms[0].st+")":""}`:"brak zaplanowanych meczów";
