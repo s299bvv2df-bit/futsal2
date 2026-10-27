@@ -98,6 +98,8 @@
   .riv summary:focus-visible{outline:3px solid var(--red);outline-offset:-3px}
   .rivnext{font-weight:400;font-size:12px;color:var(--muted)}
   .riv table{font-size:13px}.riv td,.riv th{padding:7px 10px}.riv th{background:var(--green-d)}
+  .scrl{max-height:560px;overflow:auto}
+  .scrl thead th{position:sticky;top:0;z-index:1}
   .tot{font-weight:800;background:#f4f1e6}
   footer{padding:10px 0 40px;font-size:12px;color:var(--muted)}
   footer a{color:var(--green)}
@@ -164,6 +166,12 @@
       <tbody id="tbTabela"></tbody>
     </table></div>
     <div class="bar"><span id="tabInfo"></span></div>
+    <h2 style="margin-top:28px">Klasyfikacja strzelców</h2>
+    <div class="card scrl"><table>
+      <thead><tr><th class="c">#</th><th>Zawodnik</th><th>Drużyna</th><th class="c">Bramki</th></tr></thead>
+      <tbody id="tbStrz"></tbody>
+    </table></div>
+    <div class="bar"><span id="strzInfo"></span></div>
   </section>
 
   <section id="zawodnicy">
@@ -404,6 +412,16 @@ document.addEventListener("mouseout",e=>{if(e.target.closest(".fm"))ftip.hidden=
 document.addEventListener("focusin",e=>{const f=e.target.closest(".fm");if(f)showTip(f)});
 document.addEventListener("focusout",e=>{if(e.target.closest(".fm"))ftip.hidden=true});
 document.addEventListener("click",e=>{const f=e.target.closest(".fm");f?showTip(f):ftip.hidden=true});
+// klasyfikacja strzelców ligi (futsal-polska.pl): zawodnik|drużyna|bramki, od najlepszego
+const STRZ_AS="27.10.2026";
+const STRZ="Jurij Kapustynski|Profi-Sport Wrocław|10;Michał Zawadzki|Moravia Obice|7;Bartosz Siadul|Gwiazda Ruda Śl.|6;Mateusz Mrowiec|Ruch Chorzów|5;Marius Stanciu|Profi-Sport Wrocław|5;Dawid Witek|Polonia Bielany Wroc.|5;Serhij Bedenok|Orzeł Jelcz-Laskowice|4;Łukasz Borkowski|Ruch Chorzów|4;Radosław Górkiewicz|GKS Tychy|4;Maciej Gołąbek|GKS Tychy|4;Daniel Jagodziński|Ruch Chorzów|4;Damian Makowski|Futsal Team Brzeg|4;Dominik Pasternak|Moravia Obice|4;Dominik Sudra|Futsal Team Brzeg|4;Daniel Wojtyna|Ruch Chorzów|4;Michał Łabęcki|Moravia Obice|4;Adam Andrusiak|Polonia Bielany Wroc.|3;Adam Dudek|Sośnica Gliwice|3;Sebastian Jastrzębski|Gwiazda Ruda Śl.|3;Marcin Kiełpiński|Sośnica Gliwice|3;Mychajło Koczmarow|Orzeł Jelcz-Laskowice|3;Filip Krzyżowski|GKS Tychy|3;Marcel Olanin|Polonia Bielany Wroc.|3;Mikołaj Połomka|Profi-Sport Wrocław|3;Bartłomiej Sitko|GKS Tychy|3;Mariusz Smoliński|Górnik Polkowice|3;Mateusz Świerczyński|Gwiazda Ruda Śl.|3;Tomasz Szczurek|Sośnica Gliwice|3;Paweł Wyżga|Górnik Polkowice|3;Kamil Adamski|FT Busko-Zdrój|2;Kamil Aramowicz|Profi-Sport Wrocław|2;Olivier Bednarski|GKS Tychy|2;Igor Ból|FT Busko-Zdrój|2;Sebastian Brocki|Gwiazda Ruda Śl.|2;Dawid Dziadana|FT Busko-Zdrój|2;Nikodem Gaździk|GKS Tychy|2;Tomasz Golly|Ruch Chorzów|2;Filip Jankowski|Polonia Bielany Wroc.|2;Marcin Kluza|FT Busko-Zdrój|2;Kacper Konopacki|Górnik Polkowice|2;Stanisław Krawiec|Sośnica Gliwice|2;Dawid Lizak|FC Tarnów|2;Nikita Nazarenko|FC Tarnów|2;Marcin Ptak|GKS Tychy|2;Jakub Rabiej|Moravia Obice|2;Bartosz Smalcerz|Gwiazda Ruda Śl.|2;Konrad Witek|Orzeł Jelcz-Laskowice|2;Marcel Wolan|Górnik Polkowice|2;Bohdan Własik|Profi-Sport Wrocław|2;Dawid Banaszczyk|GKS Tychy|1;Dawid Biały|Górnik Polkowice|1;Marcin Bober|Futsal Team Brzeg|1;Krystian Bracisiewicz|FT Busko-Zdrój|1;Paweł Błaszczyk|Sośnica Gliwice|1;Łukasz Ciućka|GKS Tychy|1;Patryk Cygan|FT Busko-Zdrój|1;Grzegorz Duda|Górnik Polkowice|1;Michał Grochowski|Polonia Bielany Wroc.|1;Jakub Grzybowski|Gwiazda Ruda Śl.|1;Mateusz Grzybowski|FT Busko-Zdrój|1;Paweł Grzywaczewski|Gwiazda Ruda Śl.|1;Aleksander Hartstein|Ruch Chorzów|1;Piotr Hiszpański|Sośnica Gliwice|1;Wadim Iwanow|Futsal Team Brzeg|1;Adam Jonczyk|GKS Tychy|1;Paweł Kocel|FT Busko-Zdrój|1;Adrian Kochniarczyk|FC Tarnów|1;Michał Król|Gwiazda Ruda Śl.|1;Mykoła Kuźmenko|Futsal Team Brzeg|1;Przemysław Matejko|Futsal Team Brzeg|1;Maciej Mazur|Futsal Team Brzeg|1;Adrian Niedźwiedzki|Górnik Polkowice|1;Karol Nikodem|Górnik Polkowice|1;Krzysztof Piskorz|Gwiazda Ruda Śl.|1;Jose Pepo|Futsal Team Brzeg|1;Mariusz Seget|Ruch Chorzów|1;Filip Smaś|FT Busko-Zdrój|1;Ihor Smetanenko|Profi-Sport Wrocław|1;Michał Staszowski|Sośnica Gliwice|1;Albert Stolarz|FC Tarnów|1;Kacper Sykulski|Profi-Sport Wrocław|1;Aleksander Szumilas|FT Busko-Zdrój|1;Mateusz Szyszko|Sośnica Gliwice|1;Michał Trzajna|Profi-Sport Wrocław|1;Filip Turkowyd|Polonia Bielany Wroc.|1;Dariusz Wardzała|FC Tarnów|1;Dominik Wardzała|FC Tarnów|1;Sebastian Wojciechowski|Górnik Polkowice|1;Mateusz Zawadzki|Moravia Obice|1;Łukasz Zawadzki|Moravia Obice|1;Jacek Zdun|Orzeł Jelcz-Laskowice|1;Konrad Łęcki|FT Busko-Zdrój|1".split(";").map(r=>{const [n,t,g]=r.split("|");return {n,t,g:+g}});
+function renderStrz(){
+  let pos=0,last=-1;
+  $("tbStrz").innerHTML=STRZ.map((p,i)=>{if(p.g!==last){pos=i+1;last=p.g}
+    return `<tr class="${p.t==="GKS Tychy"?"tbl-gks":""}"><td class="c rd">${pos}</td><td>${p.n}</td><td>${p.t}</td><td class="c score">${p.g}</td></tr>`}).join("");
+  const me=STRZ.filter(p=>p.t==="GKS Tychy");
+  $("strzInfo").textContent=`${STRZ.length} zawodników, ${STRZ.reduce((s,p)=>s+p.g,0)} bramek. Zawodnicy GKS Tychy są podświetleni (${me.length}, razem ${me.reduce((s,p)=>s+p.g,0)} bramek). Źródło: futsal-polska.pl, stan na ${STRZ_AS}.`;
+}
 let tview=0;
 function renderTabela(){
   const rows=TABELA.rows.map((r,i)=>({n:r[0],s:r[1+tview],i}));
@@ -478,7 +496,7 @@ document.querySelector("nav").addEventListener("click",e=>{
   document.querySelectorAll("section").forEach(s=>s.classList.toggle("on",s.id===b.dataset.t));
 });
 
-renderKpis();renderWyniki();renderTerminarz();renderRywale();renderTabela();renderPlayers();renderHist();
+renderKpis();renderWyniki();renderTerminarz();renderRywale();renderTabela();renderStrz();renderPlayers();renderHist();
 </script>
 </body>
 </html>
