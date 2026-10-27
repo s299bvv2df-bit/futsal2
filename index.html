@@ -83,6 +83,12 @@
   .tg{border:0;background:none;cursor:pointer;font:700 14px inherit;color:var(--green-d);padding:2px 6px 2px 0}
   .tbl-gks td{background:#e9f4ec;font-weight:800}
   .tbl-gks td:first-child{box-shadow:inset 4px 0 0 var(--gold)}
+  .fmw{display:inline-flex;gap:3px;justify-content:center}
+  .fm{width:20px;height:20px;border-radius:50%;display:inline-grid;place-items:center;font-size:10px;font-weight:800;cursor:default;color:#fff}
+  .fm.W{background:var(--win)}.fm.D{background:#f2c200;color:#111}.fm.L{background:var(--loss)}
+  .fm:hover,.fm:focus-visible{outline:2px solid var(--black);outline-offset:1px}
+  #ftip{position:fixed;z-index:50;max-width:260px;background:var(--black);color:#fff;border-radius:8px;padding:7px 10px;font-size:12px;line-height:1.35;pointer-events:none;box-shadow:0 4px 14px #0005;border-top:3px solid var(--gold)}
+  #ftip b{display:block;font-size:13px}
   .tot{font-weight:800;background:#f4f1e6}
   footer{padding:10px 0 40px;font-size:12px;color:var(--muted)}
   footer a{color:var(--green)}
@@ -135,7 +141,7 @@
       <button data-tv="2">Wyjazd</button>
     </div>
     <div class="card"><table>
-      <thead><tr><th class="c">#</th><th>Drużyna</th><th class="c">M</th><th class="c">Pkt</th><th class="c hide-s">Z</th><th class="c hide-s">R</th><th class="c hide-s">P</th><th class="c">Bramki</th></tr></thead>
+      <thead><tr><th class="c">#</th><th>Drużyna</th><th class="c">M</th><th class="c">Pkt</th><th class="c hide-s">Z</th><th class="c hide-s">R</th><th class="c hide-s">P</th><th class="c">Bramki</th><th class="c">Forma</th></tr></thead>
       <tbody id="tbTabela"></tbody>
     </table></div>
     <div class="bar"><span id="tabInfo"></span></div>
@@ -350,12 +356,36 @@ function renderTerminarz(){
     <td class="rd">${fmtDate(m.d)}</td><td class="rd">${m.t||"—"}</td><td>${name(m)}${i===0?'<span class="tag">następny</span>':""}</td></tr>`).join("");
 }
 
+// rozegrane mecze ligi 2026/27 (futsal-polska.pl): [data, gospodarz, gość, bramki gosp., bramki gości]
+const LIGA=[["2026-09-18","GKS Futsal Tychy","Supra Brokers Profi-Sport Futsal Wrocław",6,3],["2026-09-19","Futsal Team Busko-Zdrój","Ruch Chorzów Futsal",1,2],["2026-09-19","KS Polonia Bielany Wrocławskie","KS Futsal Team Brzeg",3,2],["2026-09-19","Moravia Tompawex Obice","Górnik Polkowice",2,4],["2026-09-19","Akademia Orzeł Futsal Jelcz-Laskowice","KS Sośnica Gliwice",1,3],["2026-09-20","Futsal Club Tarnów","Gwiazda Ruda Śląska",3,1],["2026-09-25","KS Sośnica Gliwice","GKS Futsal Tychy",0,3],["2026-09-26","Ruch Chorzów Futsal","Moravia Tompawex Obice",4,2],["2026-09-26","KS Futsal Team Brzeg","Akademia Orzeł Futsal Jelcz-Laskowice",4,1],["2026-09-27","Gwiazda Ruda Śląska","KS Polonia Bielany Wrocławskie",3,6],["2026-09-27","Supra Brokers Profi-Sport Futsal Wrocław","Futsal Team Busko-Zdrój",5,2],["2026-10-03","Moravia Tompawex Obice","KS Futsal Team Brzeg",8,4],["2026-10-03","Futsal Team Busko-Zdrój","Gwiazda Ruda Śląska",2,9],["2026-10-04","KS Polonia Bielany Wrocławskie","Supra Brokers Profi-Sport Futsal Wrocław",4,1],["2026-10-04","Futsal Club Tarnów","KS Sośnica Gliwice",1,6],["2026-10-04","Akademia Orzeł Futsal Jelcz-Laskowice","Ruch Chorzów Futsal",1,6],["2026-10-04","GKS Futsal Tychy","Górnik Polkowice",3,4],["2026-10-09","Supra Brokers Profi-Sport Futsal Wrocław","Górnik Polkowice",3,4],["2026-10-09","KS Sośnica Gliwice","Moravia Tompawex Obice",3,1],["2026-10-10","Ruch Chorzów Futsal","KS Polonia Bielany Wrocławskie",5,1],["2026-10-10","KS Futsal Team Brzeg","Futsal Team Busko-Zdrój",4,3],["2026-10-11","Gwiazda Ruda Śląska","Akademia Orzeł Futsal Jelcz-Laskowice",6,0],["2026-10-11","Futsal Club Tarnów","GKS Futsal Tychy",4,4],["2026-10-17","Moravia Tompawex Obice","Gwiazda Ruda Śląska",3,1],["2026-10-17","Futsal Team Busko-Zdrój","Górnik Polkowice",1,3],["2026-10-18","KS Polonia Bielany Wrocławskie","KS Sośnica Gliwice",1,1],["2026-10-18","GKS Futsal Tychy","Ruch Chorzów Futsal",1,2],["2026-10-18","Supra Brokers Profi-Sport Futsal Wrocław","Akademia Orzeł Futsal Jelcz-Laskowice",9,4],["2026-10-25","Supra Brokers Profi-Sport Futsal Wrocław","Moravia Tompawex Obice",4,3],["2026-10-25","GKS Futsal Tychy","Akademia Orzeł Futsal Jelcz-Laskowice",7,3],["2026-10-25","KS Sośnica Gliwice","Ruch Chorzów Futsal",2,3],["2026-10-25","Futsal Club Tarnów","Futsal Team Busko-Zdrój",7,6]];
+function teamForm(n){
+  return LIGA.filter(m=>m[1]===n||m[2]===n).sort((a,b)=>a[0].localeCompare(b[0])).slice(-5).map(m=>{
+    const home=m[1]===n,g=home?m[3]:m[4],o=home?m[4]:m[3];
+    return {r:g>o?"W":g<o?"L":"D",m};
+  });
+}
+function formHtml(n){
+  const L={W:"Zwycięstwo",D:"Remis",L:"Porażka"},K={W:"Z",D:"R",L:"P"};
+  return `<span class="fmw">${teamForm(n).map(({r,m})=>{
+    const d=new Date(m[0]+"T12:00:00").toLocaleDateString("pl-PL");
+    return `<span class="fm ${r}" tabindex="0" role="img" aria-label="${L[r]}: ${m[1]} ${m[3]}:${m[4]} ${m[2]}, ${d}" data-h="${m[1]} ${m[3]}:${m[4]} ${m[2]}" data-d="${d} · ${L[r]}">${K[r]}</span>`}).join("")}</span>`;
+}
+const ftip=document.createElement("div");ftip.id="ftip";ftip.hidden=true;document.body.appendChild(ftip);
+function showTip(el){ftip.innerHTML=`<b>${el.dataset.h}</b>${el.dataset.d}`;ftip.hidden=false;
+  const r=el.getBoundingClientRect(),w=ftip.offsetWidth,h=ftip.offsetHeight;
+  ftip.style.left=Math.max(8,Math.min(innerWidth-w-8,r.left+r.width/2-w/2))+"px";
+  ftip.style.top=(r.top-h-8>8?r.top-h-8:r.bottom+8)+"px"}
+document.addEventListener("mouseover",e=>{const f=e.target.closest(".fm");if(f)showTip(f)});
+document.addEventListener("mouseout",e=>{if(e.target.closest(".fm"))ftip.hidden=true});
+document.addEventListener("focusin",e=>{const f=e.target.closest(".fm");if(f)showTip(f)});
+document.addEventListener("focusout",e=>{if(e.target.closest(".fm"))ftip.hidden=true});
+document.addEventListener("click",e=>{const f=e.target.closest(".fm");f?showTip(f):ftip.hidden=true});
 let tview=0;
 function renderTabela(){
   const rows=TABELA.rows.map((r,i)=>({n:r[0],s:r[1+tview],i}));
   if(tview>0)rows.sort((a,b)=>b.s[1]-a.s[1]||(b.s[5]-b.s[6])-(a.s[5]-a.s[6])||b.s[5]-a.s[5]||a.i-b.i);
-  $("tbTabela").innerHTML=rows.map((r,k)=>`<tr class="${/Tychy/.test(r.n)?"tbl-gks":""}"><td class="c rd">${k+1}</td><td>${r.n}</td><td class="c">${r.s[0]}</td><td class="c"><b>${r.s[1]}</b></td><td class="c hide-s">${r.s[2]}</td><td class="c hide-s">${r.s[3]}</td><td class="c hide-s">${r.s[4]}</td><td class="c score">${r.s[5]}:${r.s[6]}</td></tr>`).join("");
-  $("tabInfo").textContent=`Stan na ${TABELA.as}. Źródło: laczynaspilka.pl, I Liga PLF, grupa południowa. Z = zwycięstwa, R = remisy, P = porażki.`;
+  $("tbTabela").innerHTML=rows.map((r,k)=>`<tr class="${/Tychy/.test(r.n)?"tbl-gks":""}"><td class="c rd">${k+1}</td><td>${r.n}</td><td class="c">${r.s[0]}</td><td class="c"><b>${r.s[1]}</b></td><td class="c hide-s">${r.s[2]}</td><td class="c hide-s">${r.s[3]}</td><td class="c hide-s">${r.s[4]}</td><td class="c score">${r.s[5]}:${r.s[6]}</td><td class="c">${formHtml(r.n)}</td></tr>`).join("");
+  $("tabInfo").textContent=`Stan na ${TABELA.as}. Źródło: laczynaspilka.pl, I Liga PLF, grupa południowa. Z = zwycięstwa, R = remisy, P = porażki. Forma: ostatnie 5 meczów ligowych (od najstarszego do najnowszego), najedź na kolor, żeby zobaczyć mecz.`;
 }
 document.querySelector(".tvnav").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
   document.querySelectorAll(".tvnav button").forEach(x=>x.classList.toggle("on",x===b));tview=+b.dataset.tv;renderTabela()});
