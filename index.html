@@ -202,7 +202,7 @@
       <button data-st="hist">Historia w GKS Futsal Tychy</button>
     </div>
     <div id="stat">
-      <div class="bar"><span>Dane z futsal-polska.pl. Ikona piłki pokazuje, w których meczach zawodnik strzelił bramki.</span></div>
+      <div class="bar"><span>Dane z futsal-polska.pl. Ikona piłki pokazuje, w których meczach zawodnik strzelił bramki (bramki z Pucharu Polski są oznaczone osobno i nie liczą się do statystyk ligowych).</span></div>
       <div class="card"><table>
         <thead><tr><th>Zawodnik</th><th class="c">Mecze w GKS</th><th class="c">Bramki</th><th class="c hide-s">Śr. / mecz</th></tr></thead>
         <tbody id="tbZawodnicy"></tbody>
@@ -484,7 +484,7 @@ const openG=new Set();
 const BALL='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8l3.5 2.5-1.3 4h-4.4l-1.3-4z"/><path d="M12 3v5M15.5 10.5L20 9M14.2 14.5l2.6 4M9.8 14.5l-2.6 4M8.5 10.5L4 9"/></svg>';
 function goalsOf(n){
   const out=[];
-  MATCHES.filter(m=>m.g!=null&&!m.cup).forEach(m=>{
+  MATCHES.filter(m=>m.g!=null).forEach(m=>{
     const sc=SCORERS[OPPKEY[m.opp]+"|"+m.d];if(!sc)return;
     const min=[];sc[0].forEach(t=>{const mm=t.match(/^(.+?) (\d+)'$/);if(mm&&mm[1]===n)min.push(+mm[2])});
     if(min.length)out.push({m,min});
@@ -493,12 +493,12 @@ function goalsOf(n){
 }
 function goalBtn(n){return `<button class="ibtn gbtn" data-pn="${n}" aria-expanded="${openG.has(n)}" title="W których meczach strzelił bramkę" aria-label="Bramki zawodnika ${n} w meczach">${BALL}</button>`}
 function goalsRow(p){
-  const g=goalsOf(p.n),tot=g.reduce((s,x)=>s+x.min.length,0);
+  const g=goalsOf(p.n),sum=a=>a.reduce((s,x)=>s+x.min.length,0),tot=sum(g.filter(x=>!x.m.cup)),cup=sum(g.filter(x=>x.m.cup));
   const body=g.map(({m,min})=>{
     const d=new Date(m.d+"T12:00:00").toLocaleDateString("pl-PL");
     const mt=m.h?`<b>GKS</b> ${m.g}:${m.o} ${m.opp}`:`${m.opp} ${m.o}:${m.g} <b>GKS</b>`;
-    return `<tr><td class="rd">${d}</td><td>${m.r}. kol. · ${mt}</td><td class="c score">${min.map(x=>x+"'").join(", ")}</td><td class="c">${min.length}</td></tr>`}).join("");
-  const note=tot!==p.g?`<div class="note">Z protokołów: ${tot} bramek.</div>`:"";
+    return `<tr${m.cup?' style="background:#faf6ea"':""}><td class="rd">${d}</td><td>${m.cup?`<span class="cup">Puchar Polski · ${m.rnd}</span>`:m.r+". kol."} · ${mt}</td><td class="c score">${min.map(x=>x+"'").join(", ")}</td><td class="c">${min.length}</td></tr>`}).join("");
+  const note=cup?`<div class="note">W lidze: ${tot} · w Pucharze Polski: ${cup}. Liczby w tabeli i klasyfikacji strzelców obejmują tylko ligę.</div>`:(tot!==p.g?`<div class="note">Z protokołów: ${tot} bramek.</div>`:"");
   return `<tr class="grow"><td colspan="4"><div class="hbox">${g.length?`<table><thead><tr><th>Data</th><th>Mecz</th><th class="c">Minuty</th><th class="c">Gole</th></tr></thead><tbody>${body}</tbody></table>`:'<div class="note">Brak bramek w protokołach tego sezonu.</div>'}${note}</div></td></tr>`;
 }
 document.addEventListener("click",e=>{const b=e.target.closest("button.gbtn");if(!b)return;const n=b.dataset.pn;openG.has(n)?openG.delete(n):openG.add(n);renderPlayers()});
