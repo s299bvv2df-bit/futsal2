@@ -202,16 +202,16 @@
       <button data-st="hist">Historia w GKS Futsal Tychy</button>
     </div>
     <div id="stat">
-      <div class="bar"><span>Dane z futsal-polska.pl. Ikona piłki pokazuje, w których meczach zawodnik strzelił bramki (bramki z Pucharu Polski są oznaczone osobno i nie liczą się do statystyk ligowych).</span></div>
+      <div class="bar"><span>Dane z futsal-polska.pl i laczynaspilka.pl (Puchar Polski). Liczby obejmują ligę i Puchar Polski, a bramki z pucharu mają etykietę „PP”. Ikona piłki pokazuje, w których meczach zawodnik strzelił bramki. Klasyfikacja strzelców w zakładce Tabela obejmuje tylko ligę.</span></div>
       <div class="card"><table>
         <thead><tr><th>Zawodnik</th><th class="c">Mecze w GKS</th><th class="c">Bramki</th><th class="c hide-s">Śr. / mecz</th></tr></thead>
         <tbody id="tbZawodnicy"></tbody>
       </table></div>
     </div>
     <div id="hist" hidden>
-      <div class="bar"><span>Wszystkie sezony w GKS Futsal Tychy (dane z futsal-polska.pl, od <b>▸</b> rozwiniesz podział na sezony). Kolumna „Puchar” pokazuje mecze · bramki w Pucharze Polski i nie wlicza się do kolumn „Mecze” i „Bramki”.</span></div>
+      <div class="bar"><span>Wszystkie sezony w GKS Futsal Tychy (dane z futsal-polska.pl, od <b>▸</b> rozwiniesz podział na sezony). W kolumnach „Mecze” i „Bramki” są też mecze i bramki z Pucharu Polski; kolumna „w tym Puchar” pokazuje, ile z tego pochodzi z pucharu (mecze · bramki).</span></div>
       <div class="card"><table>
-        <thead><tr><th>Zawodnik</th><th class="c">Sezony</th><th class="c">Mecze</th><th class="c">Bramki</th><th class="c" title="Mecze · bramki w Pucharze Polski">Puchar</th></tr></thead>
+        <thead><tr><th>Zawodnik</th><th class="c">Sezony</th><th class="c">Mecze</th><th class="c">Bramki</th><th class="c" title="Z tego w Pucharze Polski (mecze · bramki)">w tym Puchar</th></tr></thead>
         <tbody id="tbHist"></tbody>
       </table></div>
     </div>
@@ -498,16 +498,17 @@ function goalsRow(p){
     const d=new Date(m.d+"T12:00:00").toLocaleDateString("pl-PL");
     const mt=m.h?`<b>GKS</b> ${m.g}:${m.o} ${m.opp}`:`${m.opp} ${m.o}:${m.g} <b>GKS</b>`;
     return `<tr${m.cup?' style="background:#faf6ea"':""}><td class="rd">${d}</td><td>${m.cup?`<span class="cup">Puchar Polski · ${m.rnd}</span>`:m.r+". kol."} · ${mt}</td><td class="c score">${min.map(x=>x+"'").join(", ")}</td><td class="c">${min.length}</td></tr>`}).join("");
-  const note=cup?`<div class="note">W lidze: ${tot} · w Pucharze Polski: ${cup}. Liczby w tabeli i klasyfikacji strzelców obejmują tylko ligę.</div>`:(tot!==p.g?`<div class="note">Z protokołów: ${tot} bramek.</div>`:"");
+  const note=cup?`<div class="note">Razem ${tot+cup} (liga ${tot} + Puchar Polski ${cup}). Klasyfikacja strzelców w zakładce Tabela obejmuje tylko ligę.</div>`:(tot!==p.g?`<div class="note">Z protokołów: ${tot} bramek.</div>`:"");
   return `<tr class="grow"><td colspan="4"><div class="hbox">${g.length?`<table><thead><tr><th>Data</th><th>Mecz</th><th class="c">Minuty</th><th class="c">Gole</th></tr></thead><tbody>${body}</tbody></table>`:'<div class="note">Brak bramek w protokołach tego sezonu.</div>'}${note}</div></td></tr>`;
 }
 document.addEventListener("click",e=>{const b=e.target.closest("button.gbtn");if(!b)return;const n=b.dataset.pn;openG.has(n)?openG.delete(n):openG.add(n);renderPlayers()});
+function cupOf(n){return {m:MATCHES.filter(m=>m.cup&&m.g!=null&&(m.sq||[]).includes(n)).length,g:goalsOf(n).filter(x=>x.m.cup).reduce((s,x)=>s+x.min.length,0)}}
 function renderPlayers(){
-  const rows=players.map((p,i)=>({...p,i})).sort((a,b)=>b.g-a.g||b.m-a.m||a.n.localeCompare(b.n,"pl"));
+  const rows=players.map((p,i)=>{const c=cupOf(p.n);return {...p,i,cm:c.m,cg:c.g,m:p.m+c.m,g:p.g+c.g}}).sort((a,b)=>b.g-a.g||b.m-a.m||a.n.localeCompare(b.n,"pl"));
   $("tbZawodnicy").innerHTML=rows.map(p=>`<tr>
     <td><b>${p.n}</b>${p.gk?'<span class="gk">BR</span>':""}${goalBtn(p.n)}</td>
     <td class="c score">${p.m}</td>
-    <td class="c score">${p.g}</td>
+    <td class="c score">${p.g}${p.cg?` <small class="cup" title="w tym bramki z Pucharu Polski">PP ${p.cg}</small>`:""}</td>
     <td class="c hide-s rd">${p.m?(p.g/p.m).toFixed(2):"–"}</td></tr>${openG.has(p.n)?goalsRow(p):""}`).join("");
 }
 
@@ -517,11 +518,11 @@ function renderHist(){
     const seasons=(PLAYER_HIST[p.n]||[]).concat([["2026/27",p.m,p.g]]).filter(x=>x[1]>0||x[2]>0);
     const cm=MATCHES.filter(m=>m.cup&&m.g!=null&&(m.sq||[]).includes(p.n)).length,cg=goalsOf(p.n).filter(x=>x.m.cup).reduce((s,x)=>s+x.min.length,0);
     return {p,seasons,cm,cg,m:seasons.reduce((s,x)=>s+x[1],0),g:seasons.reduce((s,x)=>s+x[2],0)};
-  }).sort((a,b)=>b.g-a.g||b.m-a.m||a.p.n.localeCompare(b.p.n,"pl"));
+  }).sort((a,b)=>(b.g+b.cg)-(a.g+a.cg)||(b.m+b.cm)-(a.m+a.cm)||a.p.n.localeCompare(b.p.n,"pl"));
   $("tbHist").innerHTML=rows.map(r=>{
     const open=openP.has(r.p.n);
     let h=`<tr><td><button class="tg" data-p="${r.p.n}" aria-expanded="${open}" aria-label="Pokaż sezony: ${r.p.n}">${open?"▾":"▸"}</button><b>${r.p.n}</b>${r.p.gk?'<span class="gk">BR</span>':""}</td>
-      <td class="c">${r.seasons.length}</td><td class="c score">${r.m}</td><td class="c score">${r.g}</td><td class="c rd">${r.cm?`${r.cm} · ${r.cg}`:"–"}</td></tr>`;
+      <td class="c">${r.seasons.length}</td><td class="c score">${r.m+r.cm}</td><td class="c score">${r.g+r.cg}</td><td class="c rd">${r.cm?`${r.cm} · ${r.cg}`:"–"}</td></tr>`;
     if(open)h+=`<tr><td colspan="5" style="background:#fafbfa"><table><thead><tr><th>Sezon</th><th class="c">Mecze</th><th class="c">Bramki</th><th class="c">Śr.</th></tr></thead><tbody>
       ${r.cm?`<tr style="background:#faf6ea"><td><span class="cup">Puchar Polski</span> 2026/27</td><td class="c">${r.cm}</td><td class="c">${r.cg}</td><td class="c rd">${(r.cg/r.cm).toFixed(2)}</td></tr>`:""}${r.seasons.slice().reverse().map(x=>`<tr><td>${x[0]}${x[0]==="2026/27"?' <span class="tag">trwa</span>':""}</td><td class="c">${x[1]}</td><td class="c">${x[2]}</td><td class="c rd">${x[1]?(x[2]/x[1]).toFixed(2):"–"}</td></tr>`).join("")}
       <tr class="tot"><td>${r.cm?"Razem (liga)":"Razem"}</td><td class="c">${r.m}</td><td class="c">${r.g}</td><td class="c">${r.m?(r.g/r.m).toFixed(2):"–"}</td></tr>${r.cm?`<tr class="tot"><td>Razem z pucharem</td><td class="c">${r.m+r.cm}</td><td class="c">${r.g+r.cg}</td><td class="c">${((r.g+r.cg)/(r.m+r.cm)).toFixed(2)}</td></tr>`:""}</tbody></table></td></tr>`;
